@@ -19,10 +19,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float moveSpeed = 6f;
 
     [Header("Lab wiring (drag your objects here)")]
-    [SerializeField] private GameObject orbPrefab;   // TODO 5: used to spawn a bonus orb
-    [SerializeField] private Transform cameraTransform; // used by TODO 3 (camera follow)
+    [SerializeField] private GameObject orbPrefab;
+    [SerializeField] private Transform cameraTransform;
 
     private Rigidbody rb;
+
+    // Controls whether the bonus Orb should spawn.
+    private bool allowBonusOrb = false;
 
     void Awake()
     {
@@ -41,13 +44,15 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMovement()
     {
-        float h = Input.GetAxis("Horizontal"); // A/D + arrows
-        float v = Input.GetAxis("Vertical");   // W/S + arrows
+        float h = Input.GetAxis("Horizontal");
+        float v = Input.GetAxis("Vertical");
 
         Vector3 movement = new Vector3(h, 0f, v).normalized;
 
-        // Time.deltaTime makes speed identical at any frame rate (10 FPS or 144 FPS).
-        transform.Translate(movement * moveSpeed * Time.deltaTime, Space.World);
+        transform.Translate(
+            movement * moveSpeed * Time.deltaTime,
+            Space.World
+        );
     }
 
     // ---------------------------------------------------------------
@@ -68,18 +73,25 @@ public class PlayerController : MonoBehaviour
     }
 
     // TODO 2: Collect an orb when the Player touches it.
-    void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Orb"))
-        {
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.Collect();
-            }
+        if (!other.CompareTag("Orb"))
+            return;
 
-            Debug.Log("Collected an orb!");
-            Destroy(other.gameObject);
+        // Prevent collecting the same Orb twice.
+        if (!other.gameObject.activeInHierarchy)
+            return;
+
+        other.gameObject.SetActive(false);
+
+        Debug.Log("Orb collected!");
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.Collect();
         }
+
+        Destroy(other.gameObject);
     }
 
     // TODO 3: Make the camera follow the Player.
@@ -87,16 +99,24 @@ public class PlayerController : MonoBehaviour
     {
         if (cameraTransform != null)
         {
-            cameraTransform.position = transform.position + new Vector3(0f, 8f, -8f);
+            cameraTransform.position =
+                transform.position + new Vector3(0f, 8f, -8f);
+
+            cameraTransform.LookAt(transform);
         }
     }
 
     // TODO 5: Spawn a bonus orb when the Player is destroyed.
-    void OnDestroy()
+    private void OnDestroy()
     {
+        // Do not spawn a bonus orb when Unity is closing the scene.
+        if (!gameObject.scene.isLoaded || !allowBonusOrb)
+            return;
+
         if (orbPrefab != null)
         {
             Instantiate(orbPrefab, transform.position, Quaternion.identity);
+            Debug.Log("Bonus orb spawned!");
         }
     }
 }

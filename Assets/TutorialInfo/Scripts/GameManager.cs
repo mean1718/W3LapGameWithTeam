@@ -21,44 +21,67 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [Header("State")]
-    [SerializeField] private int totalOrbs = 5;
+    [SerializeField] private int totalOrbs = 12;
 
     private int collected;
 
-    void Awake()
+    private void Awake()
     {
-        // Simple singleton so the player can call GameManager.Instance.Collect().
+        // Prevent duplicate GameManagers
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
 
-        // TODO 6: replace the serialized totalOrbs with a live count:
+        // TODO 6: Find all Orbs in the scene
         GameObject[] orbs = GameObject.FindGameObjectsWithTag("Orb");
+
         totalOrbs = orbs.Length;
+
+        collected = 0;
+
+        Debug.Log("Total Orbs: " + totalOrbs);
     }
 
+    // Increase score when Player collects an Orb
     public void Collect()
     {
         collected++;
-        Debug.Log($"[GameManager] Collected {collected}/{totalOrbs}");
+
+        Debug.Log("Collected: " + collected + " / " + totalOrbs);
     }
 
-    void OnGUI()
+    private void OnGUI()
     {
-        // Immediate-mode UI: runs several times per frame, so keep it cheap.
-        GUI.Label(new Rect(12, 10, 400, 30), $"Orbs collected: {collected} / {totalOrbs}", new GUIStyle(GUI.skin.label) { fontSize = 20 });
+        GUIStyle style = new GUIStyle();
 
-        // TODO 7: when collected >= totalOrbs, draw a large centered "YOU WIN!" label.
+        style.fontSize = 25;
+        style.normal.textColor = Color.white;
+        style.alignment = TextAnchor.UpperLeft;
+
+        // TODO 7: Show YOU WIN when all Orbs are collected
         if (totalOrbs > 0 && collected >= totalOrbs)
         {
-            GUIStyle winStyle = new GUIStyle(GUI.skin.label);
-            winStyle.fontSize = 40;
-            winStyle.alignment = TextAnchor.MiddleCenter;
-            winStyle.fontStyle = FontStyle.Bold;
-            winStyle.normal.textColor = Color.green;
+            style.fontSize = 50;
+            style.normal.textColor = Color.green;
+            style.alignment = TextAnchor.MiddleCenter;
 
             GUI.Label(
                 new Rect(0, 0, Screen.width, Screen.height),
                 "YOU WIN!",
-                winStyle
+                style
+            );
+        }
+        else
+        {
+            // Display current score
+            GUI.Label(
+                new Rect(15, 15, 250, 50),
+                "Orbs: " + collected + " / " + totalOrbs,
+                style
             );
         }
     }

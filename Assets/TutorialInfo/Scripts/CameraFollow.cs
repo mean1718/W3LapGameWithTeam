@@ -1,4 +1,3 @@
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,7 +18,7 @@ using UnityEngine;
 public class CameraFollow : MonoBehaviour
 {
     [Header("Target")]
-    [SerializeField] private Transform target;     // drag the Player here
+    [SerializeField] private Transform target;
 
     [Header("Framing")]
     [SerializeField] private Vector3 offset = new Vector3(0f, 12f, -8f);
@@ -29,10 +28,25 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] private float minZoom = 6f;
     [SerializeField] private float maxZoom = 18f;
 
+    void Start()
+    {
+        // Automatically find Player if target is not assigned.
+        if (target == null)
+        {
+            GameObject player = GameObject.Find("Player");
+
+            if (player != null)
+            {
+                target = player.transform;
+            }
+        }
+    }
+
     void LateUpdate()
     {
         if (target == null) return;
 
+        // TODO 8: Mouse scroll zoom.
         float scroll = Input.GetAxis("Mouse ScrollWheel");
 
         if (Mathf.Abs(scroll) > 0.001f)
@@ -48,8 +62,16 @@ public class CameraFollow : MonoBehaviour
             offset = offset.normalized * newDistance;
         }
 
-        // Follow AFTER the player moved — this is why we use LateUpdate.
+        // TODO 3: Follow AFTER the player moves.
         Vector3 desired = target.position + offset;
-        transform.position = Vector3.Lerp(transform.position, desired, followSharpness * Time.deltaTime);
+
+        transform.position = Vector3.Lerp(
+            transform.position,
+            desired,
+            followSharpness * Time.deltaTime
+        );
+
+        // Make camera look at Player.
+        transform.LookAt(target);
     }
 }

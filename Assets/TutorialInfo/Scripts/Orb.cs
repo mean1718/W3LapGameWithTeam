@@ -1,4 +1,3 @@
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,7 +15,13 @@ using UnityEngine;
 public class Orb : MonoBehaviour
 {
     [Header("Click palette")]
-    [SerializeField] private Color[] clickColors = { Color.cyan, Color.magenta, Color.yellow };
+    [SerializeField]
+    private Color[] clickColors =
+    {
+        Color.cyan,
+        Color.magenta,
+        Color.yellow
+    };
 
     [Header("Bob & spin")]
     [SerializeField] private float bobHeight = 0.15f;
@@ -37,15 +42,31 @@ public class Orb : MonoBehaviour
     {
         // Bob up and down using Time.time (seconds since Play started).
         float bob = Mathf.Sin(Time.time * 3f) * bobHeight;
+
         transform.position = basePosition + Vector3.up * bob;
-        transform.Rotate(Vector3.up, spinSpeed * Time.deltaTime, Space.World);
+
+        transform.Rotate(
+            Vector3.up,
+            spinSpeed * Time.deltaTime,
+            Space.World
+        );
     }
 
     private void OnMouseDown()
     {
-        // Click the orb's collider → cycle its color. Uses GetComponent<T>().
+        // Click the orb's collider → cycle its color.
+        if (clickColors == null || clickColors.Length == 0)
+            return;
+
+        Renderer orbRenderer = GetComponent<Renderer>();
+
+        if (orbRenderer == null)
+            return;
+
         clickIndex = (clickIndex + 1) % clickColors.Length;
-        GetComponent<Renderer>().material.color = clickColors[clickIndex];
+
+        orbRenderer.material.color = clickColors[clickIndex];
+
         Debug.Log($"[Orb] Clicked → {clickColors[clickIndex]}");
     }
 
@@ -59,19 +80,29 @@ public class Orb : MonoBehaviour
         }
 
         Vector3 mousePosition = Input.mousePosition;
-        float distanceFromCamera = mainCamera.WorldToScreenPoint(transform.position).z;
+
+        float distanceFromCamera =
+            mainCamera.WorldToScreenPoint(transform.position).z;
 
         mousePosition.z = distanceFromCamera;
 
-        Vector3 worldPosition = mainCamera.ScreenToWorldPoint(mousePosition);
+        Vector3 worldPosition =
+            mainCamera.ScreenToWorldPoint(mousePosition);
 
         transform.position = new Vector3(
             worldPosition.x,
             transform.position.y,
             worldPosition.z
         );
+
+        // Update base position so the orb stays where it was dragged.
+        basePosition = new Vector3(
+            worldPosition.x,
+            basePosition.y,
+            worldPosition.z
+        );
     }
 
-    // NOTE: The player script collects orbs in its OnTriggerEnter. This script
-    // only handles looking pretty, being clicked, and bobbing.
+    // NOTE: The player script collects orbs in its OnTriggerEnter.
+    // This script handles appearance, clicking, dragging, and bobbing.
 }
